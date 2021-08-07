@@ -1,5 +1,4 @@
-# AWS-Docker
-# AWS EC2, SpringBoot, React, Docker
+## AWS EC2, SpringBoot, React, Docker, Docker-Compose
 ---
 ## 설계
   - <img src="https://user-images.githubusercontent.com/60174144/128597490-aae271da-b634-420c-a41d-9d6d6c2c5d2d.png" width="70%" height="70%">
