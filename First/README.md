@@ -8,7 +8,7 @@ client (80) -> (80) nginxproxy (3000)-> (3000) react
 client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose links) -> mysql
 ```
 ## 1. AWS EC2 
-- EC2의 Docker & Docker-compose 설치
+- EC2의 Docker & Docker-compose 설치 & docker login
 - AWS Inbound 80 port 열어주기 (test 용으로 3000,8080도 open)
 
 ## 2. AWS server에서 사용 할 DockerFile 생성
@@ -20,6 +20,15 @@ client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose li
       - jdk 11
       - gradle
       ```
+
+      ```properties
+      # application.properties 설정
+      spring.datasource.url=jdbc:mysql://ec2IP:3306/fundb?useUnicode=true\&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
+      spring.datasource.username=root
+      spring.datasource.password=PASSWORD
+      spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+      ```
+      
 
     - #### springboot 프로젝트 안 최상위 디렉토리에 DockerFile 생성 
       ```dockerfile
@@ -119,8 +128,8 @@ services:
     volumes:
       - ./mysqldata:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ******
-      MYSQL_DATABASE: fundb
+      MYSQL_ROOT_PASSWORD=******
+      MYSQL_DATABASE=fundb
     ports:
       - "3306:3306"
     container_name: dbcontainer
