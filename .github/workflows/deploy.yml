@@ -28,7 +28,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: |
         echo $pwd
-        chmod +x gradlew
+        sudo chmod +x gradlew
       shell: bash
       working-directory: /home/ubuntu/greenery-server
 
