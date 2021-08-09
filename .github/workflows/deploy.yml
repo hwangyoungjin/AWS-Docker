@@ -13,11 +13,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      
-     # 메시지를 출력한다.
+
+    # 메시지를 출력한다.
     - name: Run a one-line script
       run: echo Start server Deploy
-      
+
       # 자바 버전을 설정해준다.
     - name: Set up JDK 1.8
       uses: actions/setup-java@v1
@@ -30,15 +30,14 @@ jobs:
         echo $pwd
         chmod +x gradlew
       shell: bash
-      working-directory: ./greenery-server
+      working-directory: /home/ubuntu/greenery-server
 
       # Gradle을 활용해 배포한다.
     - name: Build with Gradle
       run: |
         sudo ./gradlew clean bootjar
-        java --name "server" -- -jar build/libs/cc-0.0.1-SNAPSHOT.jar 
       shell: bash
-      working-directory: ./greenery-server
+      working-directory: /home/ubuntu/greenery-server
 
     # AWS 서비스를 사용하기 위한 인증 과정이다.
     - name: Configure AWS credentials
@@ -48,3 +47,9 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-northeast-2
 
+    # docker run
+    - name: Code Deploy
+      run: |
+        docker-compose up -d
+      shell: bash
+      working-directory: /home/ubuntu/greenery-db-nginx
