@@ -4,26 +4,38 @@
   
 ## 1. EC2 서버에 Docker, Docker-compose 설치 & docker login
 
-## 2. MySQL와 nginx docekr-compose 설정
+## 2. MySQL와 nginx, client, server docekr-compose 설정
 ```docker
 services:
   nginxproxy:
     depends_on:
       - db
       - server
+      - client
     image: nginx:latest
     ports:
       - "80:80"
     restart: always
     volumes:
       - "./nginx/nginx.conf:/etc/nginx/nginx.conf"
+  client:
+    restart: always
+    build:
+      context: /home/ubuntu/greenery-front
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # if want direct access
+    container_name: clientcontainer
+    depends_on:
+      - server
+
   server:
     restart: restart
     build:
       context: /home/ubuntu/greenery-server
       dockerfile: Dockerfile
     links:
-      - "db:mysqldb"
+      - "db:greenerydb"
     ports:
       - "8080:8080" # if want direct access
     container_name: servercontainer
@@ -68,9 +80,9 @@ services:
           server server:8080;
       }
 
-     #  upstream docker-client {
-     #     server client:3000;
-     # }
+      upstream docker-client {
+          server client:3000;
+      }
 
       server {
           location /api/ { #client가 " :80/api/~ "으로 요청시 proxy가 server로  " /api/~ " 요청 전달
@@ -83,14 +95,14 @@ services:
               proxy_set_header   X-Forwarded-Host $server_name;
           }
           
-     #     location / { #client가 " :80/~ "으로 요청시 proxy가 front로  " /~ " 요청 전달
-     #         proxy_pass         http://docker-client;
-     #         proxy_redirect     off;
-     #         proxy_set_header   Host $host;
-     #         proxy_set_header   X-Real-IP $remote_addr;
-     #         proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
-     #         proxy_set_header   X-Forwarded-Host $server_name;
-     #     }
+          location / { #client가 " :80/~ "으로 요청시 proxy가 front로  " /~ " 요청 전달
+              proxy_pass         http://docker-client;
+              proxy_redirect     off;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host $server_name;
+          }
       }
   }
   ```        
@@ -115,9 +127,41 @@ spring.datasource.password=green
 ```
   - dockerfile 설정
 
+## 5. client 프로젝트
+```properties
 
+```
+  - dockerfile 설정
+  ```dockerfile
+    # pull official base image
+    FROM node:13.12.0-alpine
 
-## 5. [github action용으로 aws ec2 설정]
+    # set working directory
+    WORKDIR /app
+
+    # add `/app/node_modules/.bin` to $PATH
+    ENV PATH /app/node_modules/.bin:$PATH
+
+    # install app dependencies
+    COPY package.json ./
+    COPY package-lock.json ./
+    RUN npm install --silent
+    RUN npm install react-scripts@3.4.1 -g --silent
+
+    # add app
+    # ./dockerignore에 있는것은 제외하고 복사
+    COPY . ./
+
+    # start app
+    CMD ["npm", "start"]
+    ```
+    - #### .dockerignore
+    ```docker
+    # COPY시 해당 폴더는 제외
+    node_modules
+    ```
+
+## 6. [github action용으로 aws ec2 설정]
   - [Reference1](https://www.sunny-son.space/AWS/Github%20Action%20CICD/)
   - [Reference2](https://isntyet.github.io/deploy/github-action%EA%B3%BC-aws-code-deploy%EB%A5%BC-%EC%9D%B4%EC%9A%A9%ED%95%98%EC%97%AC-spring-boot-%EB%B0%B0%ED%8F%AC%ED%95%98%EA%B8%B0(2)/)
   - ### 1. EC2 IAM 설정
@@ -149,13 +193,13 @@ spring.datasource.password=green
     - 정책 : CodeDeployFullAccess
     - 사용자 만든 후 생성되는 액세스 키와 비밀번호 키 저장!!
 
-## 6. github action 설정
+## 6. github action 설정[아직 해결X]
 - [Reference](https://gist.github.com/jypthemiracle/edf6e92ed10960f3ac2e94fc6fd21a20)
   1. github action 설정
     - server 용 deploy code
     ```
     name: deploy
-    on:
+    on: #main branch에 push하면 event trigger
       push:
         branches:
           - main
@@ -183,18 +227,15 @@ spring.datasource.password=green
           # Gradle에 실행 권한을 부여한다.
         - name: Grant execute permission for gradlew
           run: |
-            echo $pwd
-            chmod +x gradlew
+            sudo chmod +x gradlew
           shell: bash
-          working-directory: ./greenery-server
-
+          
           # Gradle을 활용해 배포한다.
         - name: Build with Gradle
           run: |
             sudo ./gradlew clean bootjar
           shell: bash
-          working-directory: ./greenery-server
-
+          
         # AWS 서비스를 사용하기 위한 인증 과정이다.
         - name: Configure AWS credentials
           uses: aws-actions/configure-aws-credentials@v1
@@ -208,7 +249,7 @@ spring.datasource.password=green
           run: |
             docker-compose up -d
           shell: bash
-          working-directory: ./greenery-db-nginx
+          working-directory: /home/ubuntu/greenery-db-nginx
     ```
     - Repo Secret Key 설정
       1. Name : AWS_ACCESS_KEY_ID , Value : 이전에 받은 액세스 ID

@@ -23,10 +23,14 @@ client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose li
 
       ```properties
       # application.properties 설정
-      spring.datasource.url=jdbc:mysql://ec2IP:3306/fundb?useUnicode=true\&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
+      spring.jpa.hibernate.ddl-auto=create-drop
+      spring.datasource.url=jdbc:mysql://ec2IP:3306/fundb?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=UTC
       spring.datasource.username=root
       spring.datasource.password=PASSWORD
       spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+      #gradle 설정
+      runtimeOnly 'mysql:mysql-connector-java'
       ```
       
 
@@ -105,7 +109,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000" # if want direct access
-    container_name:clientcontainer
+    container_name: clientcontainer
     depends_on:
       - server
   
