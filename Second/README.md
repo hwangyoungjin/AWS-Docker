@@ -8,7 +8,7 @@
   - client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose links) -> mysql
 ```
 ## 2. MySQL와 nginx, client, server docekr-compose 설정
-```docker
+```dockerfile
 services:
   nginxproxy:
     depends_on:
@@ -130,44 +130,46 @@ spring.datasource.password=green
 ```
   - dockerfile 설정
 
-## 5. client 프로젝트
-```properties
+- ## 5. client 프로젝트
 
+- #### dockerfile 설정
+
+```dockerfile
+  # pull official base image
+  FROM node:13.12.0-alpine
+
+  # set working directory
+  WORKDIR /app
+
+  # add `/app/node_modules/.bin` to $PATH
+  ENV PATH /app/node_modules/.bin:$PATH
+
+  # install app dependencies
+  COPY package.json ./
+  COPY package-lock.json ./
+  RUN npm install --silent
+  RUN npm install react-scripts@3.4.1 -g --silent
+
+  # add app
+  # ./dockerignore에 있는것은 제외하고 복사
+  COPY . ./
+
+  # start app
+  CMD ["npm", "start"]
 ```
-  - dockerfile 설정
-  ```dockerfile
-    # pull official base image
-    FROM node:13.12.0-alpine
 
-    # set working directory
-    WORKDIR /app
+- #### .dockerignore
+```dockerfile
+  # COPY시 해당 폴더는 제외
+  node_modules
+```
 
-    # add `/app/node_modules/.bin` to $PATH
-    ENV PATH /app/node_modules/.bin:$PATH
-
-    # install app dependencies
-    COPY package.json ./
-    COPY package-lock.json ./
-    RUN npm install --silent
-    RUN npm install react-scripts@3.4.1 -g --silent
-
-    # add app
-    # ./dockerignore에 있는것은 제외하고 복사
-    COPY . ./
-
-    # start app
-    CMD ["npm", "start"]
-    ```
-    - #### .dockerignore
-    ```docker
-    # COPY시 해당 폴더는 제외
-    node_modules
-    ```
 ## 6. [github actions로 ec2 접속]
   - 1. ec2 인스턴스 SSH KEY만 생성
   - 2. github repo secret key 설정
   - 3. deploy 스크립트
-  ```deploy
+
+```deploy
   name: deploy
 
   on:
@@ -197,7 +199,7 @@ spring.datasource.password=green
               sudo ./gradlew clean bootjar
               cd ..
               docker-compose up --build -d
-  ```
+```
 ## [추후 S3 연동해서 CI/CD]
   - ### PASS [github action용으로 aws ec2 설정 - fail]
     - [Reference1](https://www.sunny-son.space/AWS/Github%20Action%20CICD/)
