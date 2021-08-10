@@ -3,7 +3,10 @@
 ## 설계
   
 ## 1. EC2 서버에 Docker, Docker-compose 설치 & docker login
-
+```java
+  - client (80) -> (80) nginxproxy (3000)-> (3000) react 
+  - client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose links) -> mysql
+```
 ## 2. MySQL와 nginx, client, server docekr-compose 설정
 ```docker
 services:
@@ -257,6 +260,7 @@ spring.datasource.password=green
       
 
 [docker-compose 실행후 db 접속시 에러 해결](https://stackoverflow.com/questions/59838692/mysql-root-password-is-set-but-getting-access-denied-for-user-rootlocalhost)
+[ec2 업그레이드 - aws 유형 변경](https://nerd-mix.tistory.com/32)
 ```
 * 도커 & workbench에서 접속시 에러
 access denied for user 'root'@'localhost'
