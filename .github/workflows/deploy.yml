@@ -29,14 +29,12 @@ jobs:
       run: |
         echo $pwd
         sudo chmod +x gradlew
-      shell: bash
       working-directory: /home/ubuntu/greenery-server
 
       # Gradle을 활용해 배포한다.
     - name: Build with Gradle
       run: |
         sudo ./gradlew clean bootjar
-      shell: bash
       working-directory: /home/ubuntu/greenery-server
 
     # AWS 서비스를 사용하기 위한 인증 과정이다.
@@ -51,5 +49,4 @@ jobs:
     - name: Code Deploy
       run: |
         docker-compose up -d
-      shell: bash
       working-directory: /home/ubuntu/greenery-db-nginx
