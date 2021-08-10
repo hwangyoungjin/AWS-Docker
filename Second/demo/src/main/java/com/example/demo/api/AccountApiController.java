@@ -8,8 +8,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/account")
 public class AccountApiController {
-    @GetMapping("/test")
-    public String test(){
+    @GetMapping("/v1/test")
+    public String test1(){
+        return "success!!";
+    }
+
+    @GetMapping("/v2/test")
+    public String test2(){
         return "success!!";
     }
 }
