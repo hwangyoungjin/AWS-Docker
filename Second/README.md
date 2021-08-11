@@ -35,7 +35,7 @@ services:
   server:
     restart: restart
     build:
-      context: /home/ubuntu/greenery-server
+      context: /home/ubuntu/greenery-server/demo
       dockerfile: Dockerfile
     links:
       - "db:greenerydb"
@@ -129,6 +129,16 @@ spring.datasource.password=green
 	runtimeOnly 'mysql:mysql-connector-java'
 ```
   - dockerfile 설정
+```dockerfile
+FROM openjdk:8-jdk-alpine
+# application 이름으로 work directory 만들기
+WORKDIR application
+# jar 파일 변수로 지정
+ARG JAR_FILE=build/libs/*.jar
+# jar_file을 application.jar 이름으로 copy 하기
+COPY ${JAR_FILE} application.jar
+ENTRYPOINT ["java","-jar","application.jar"]
+```
 
 - ## 5. client 프로젝트
 
@@ -167,27 +177,33 @@ spring.datasource.password=green
 ## 6. [github actions로 ec2 접속]
   - 0. ec2 서버에 jdk 8 설치
   - 1. ec2 인스턴스 SSH key생성(pem)
-  - 2. github repo secret key 설정
+  - 2. ec2 서버에서 git 설치 후 github repo clone
+    - [private repo clone 방법](https://uhou.tistory.com/99)
+  - 3. github repo secret key 설정
     - 1) host : server ip
     - 2) user : ubuntu
     - 3) ssh_key : .pem 파일 전체 내용(RSA 암호화된 코드)
-  - 3. deploy 스크립트
+  - 4. deploy 스크립트
 
 ```deploy
   name: deploy
 
   on:
-    push:
+    push: 
+    # master 브랜치에 push(merger) 되면 event trigger
       branches:
-        - main
+        - master
 
-
+  # job은 ssh 1개
   jobs:
     SSH:
       runs-on: ubuntu-latest
 
       steps:
+        # https://github.com/actions/checkout 사용
         - uses: actions/checkout@v2
+
+        # https://github.com/appleboy/ssh-action 사용
         - name: Run scripts in server
           uses: appleboy/ssh-action@master
           with:
@@ -199,9 +215,11 @@ spring.datasource.password=green
               git reset --hard
               git fetch
               git pull
+              cd demo
               chmod +x gradlew
               sudo ./gradlew clean bootjar
               cd ..
+              cd greenery-db-nginx
               docker-compose up --build -d
 ```
 ## [추후 S3 연동해서 CI/CD]()   
