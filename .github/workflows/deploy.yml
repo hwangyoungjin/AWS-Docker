@@ -20,3 +20,5 @@ jobs:
           username: ${{ secrets.USER }}
           script: |
             echo hi server
+            cd greenery-db-nginx
+            docker-compose up --build -d
