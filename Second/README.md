@@ -1,4 +1,12 @@
-## AWS EC2, nginxproxy, SpringBoot, React, Docker, Docker-compose, Github-Actions
+## Skill
+  - #### AWS EC2
+  - #### HTTPS 
+  - #### nginxproxy
+  - #### SpringBoot
+  - #### React
+  - #### Docker
+  - #### Docker-compose
+  - #### Github-Actions
 ---
 ## 설계
   
@@ -8,7 +16,7 @@
   - client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose links) -> mysql
 ```
 ## 2. MySQL와 nginx, client, server docekr-compose 설정
-```dockerfile
+```yml
 services:
   nginxproxy:
     depends_on:
@@ -58,7 +66,7 @@ services:
 
 ## 3. nginxproxy 설정 
   - docker-compose있는 디렉토리 nginx 폴더 안 nginx.conf
-  ```nginx
+  ```conf
   user nginx;
   worker_processes  auto;
 
@@ -177,16 +185,17 @@ ENTRYPOINT ["java","-jar","application.jar"]
 ## 6. [github actions로 ec2 접속]
   - 0. ec2 서버에 jdk 8 설치
   - 1. ec2 인스턴스 SSH key생성(pem)
-  - 2. ec2 서버에서 git 설치 후 github repo clone
+  - 2. ec2 서버에서 git 설치 후 server, clien 디렉토리 만들고
+    - github repo clone
     - [private repo clone 방법](https://uhou.tistory.com/99)
   - 3. github repo secret key 설정
     - 1) host : server ip
     - 2) user : ubuntu
     - 3) ssh_key : .pem 파일 전체 내용(RSA 암호화된 코드)
-  - 4. deploy 스크립트
+  - 4. server deploy 스크립트
 
-```deploy
-  name: deploy
+```yml
+  name: deploy.yml
 
   on:
     push: 
@@ -218,9 +227,39 @@ ENTRYPOINT ["java","-jar","application.jar"]
               cd demo
               chmod +x gradlew
               sudo ./gradlew clean bootjar
-              cd ..
-              cd greenery-db-nginx
+              cd ~/greenery-db-nginx
               docker-compose up --build -d
+```
+  - 5. client deploy.yml
+```yml
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  SSH:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run scripts in server
+        uses: appleboy/ssh-action@master
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          script: |
+            cd greenery-client
+            git add .
+            git reset --hard
+            git fetch
+            git pull
+            cd ~/greenery-db-nginx
+            docker-compose up --build -d
 ```
 ## [추후 S3 연동해서 CI/CD]()   
 
