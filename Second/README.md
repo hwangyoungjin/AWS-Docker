@@ -131,7 +131,7 @@ spring.jpa.hibernate.ddl-auto=create-drop
 spring.datasource.url=jdbc:mysql://3.38.62.243:3306/greenerydb?useUnicode=true\
   &characterEncoding=utf8&useSSL=false&serverTimezone=UTC
 spring.datasource.username=root
-spring.datasource.password=green
+spring.datasource.password=****
 
 # gradle
 	runtimeOnly 'mysql:mysql-connector-java'
@@ -261,7 +261,7 @@ jobs:
             cd ~/greenery-db-nginx
             docker-compose up --build -d
 ```
-## [추후 S3 연동해서 CI/CD]()   
+## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 
 ## Reference
 [docker-compose 실행후 db 접속시 에러 해결](https://stackoverflow.com/questions/59838692/mysql-root-password-is-set-but-getting-access-denied-for-user-rootlocalhost)
