@@ -219,7 +219,7 @@ ENTRYPOINT ["java","-jar","application.jar"]
             key: ${{ secrets.SSH_KEY }}
             host: ${{ secrets.HOST }}
             username: ${{ secrets.USER }}
-            script: |
+            script: | # EC2 에서 실행되는 script
               cd greenery-server
               git reset --hard
               git fetch

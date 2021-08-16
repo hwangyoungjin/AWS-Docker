@@ -1,4 +1,11 @@
 # AWS-Docker
+## Mysql Utf-8 설정
+```
+* docker 컨테이너로 mysql 실행 후 
+* workbench로 해당 스키마 utf8 설정
+* 이후 table 생성시 자동 utf8 설정됨
+```
+
 # [First-Test](https://github.com/hwangyoungjin/AWS-Docker/blob/main/First/README.md)
 ## AWS EC2, ningxproxy, SpringBoot, React, Docker, Docker-Compose
 ### 설계
