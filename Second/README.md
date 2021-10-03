@@ -1,12 +1,12 @@
 ## Skill
   - #### AWS EC2
-  - #### HTTPS 
   - #### nginxproxy
   - #### SpringBoot
   - #### React
   - #### Docker
   - #### Docker-compose
   - #### Github-Actions
+  - #### HTTPS
 ---
 ## 설계
   
@@ -35,7 +35,7 @@ services:
       context: /home/ubuntu/greenery-front
       dockerfile: Dockerfile
     ports:
-      - "3000:3000" # if want direct access
+      - "3000:3000" # If you don't want to go through nginxproxy and want to approach right away,
     container_name: clientcontainer
     depends_on:
       - server
@@ -48,7 +48,7 @@ services:
     links:
       - "db:greenerydb"
     ports:
-      - "8080:8080" # if want direct access
+      - "8080:8080" # If you don't want to go through nginxproxy and want to approach right away,
     container_name: servercontainer
     depends_on:
       - db
@@ -188,6 +188,7 @@ ENTRYPOINT ["java","-jar","application.jar"]
   - 2. ec2 서버에서 git 설치 후 server, clien 디렉토리 만들고
     - github repo clone
     - [private repo clone 방법](https://uhou.tistory.com/99)
+      - [rsa key pair 기존 키 삭제 후 새로 생성 가능](https://yunzema.tistory.com/373)
   - 3. github repo secret key 설정
     - 1) host : server ip
     - 2) user : ubuntu
@@ -261,6 +262,212 @@ jobs:
             cd ~/greenery-db-nginx
             docker-compose up --build -d
 ```
+## 7. Https 설정
+  #### 1. [닷네임코리아](https://domain.dotname.co.kr)에서 도메인 구매 후 ip 연결
+  ```html
+  www.grnr.co.kr -> 3.38.62.243
+  grnr.co.kr -> 3.38.62.243
+  ```
+  #### 2. aws https에 사용할 443 포트 open
+  #### 3. docker-compose.ymal에 https 관련 설정 추가
+  ```yml
+  # certbot & nginx 설정
+  # certbot : 연단위 비용없이 인증서를 발급해주는 서비스로 90일마다 갱신해줘야한다.
+  version: "3"
+
+  services:
+  nginxproxy:
+    depends_on:
+      - db
+      - server
+      - client
+    image: nginx:latest
+    ports:
+      - "80:80"
+      #========= https port number =============
+      - "443:443" 
+    restart: always
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      #========= https 인증서 파일 경로=============
+      - ./certbot-etc:/etc/letsencrypt
+      #========= #nginx root index 파일=============
+      - ./myweb:/usr/share/nginx/html
+  client:
+    restart: always
+    build:
+      context: /home/ubuntu/greenery-front
+      dockerfile: Dockerfile
+    container_name: clientcontainer
+    depends_on:
+      - server
+
+  #========= https 인증서 받기=============
+  certbot:
+    depends_on:
+      - webserver
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot-etc:/etc/letsencrypt
+      - ./myweb:/usr/share/nginx/html # #nginx root index 파일
+    command: certonly --dry-run --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr -d www.grnr.co.kr
+  #======================
+
+  server:
+    restart: restart
+    build:
+      context: /home/ubuntu/greenery-server/demo
+      dockerfile: Dockerfile
+    links:
+      - "db:greenerydb"
+    container_name: servercontainer
+    depends_on:
+      - db
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./greenerydb:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=greenerydb
+      - MYSQL_ROOT_PASSWORD=******
+    ports:
+      - "3306:3306" # If you don't want to go through nginxproxy and want to approach right away,
+    container_name: dbcontainer
+  ```
+  #### 4. nginx.conf에 https 인증서 받기 위해 추가
+  ```conf
+      server {
+          # ----------------https-----------------
+          location ~ /.well-known/acme-challenge {
+                  allow all;
+                  root /usr/share/nginx/html; #nginx root index 파일
+                  try_files $uri =404;
+          }
+
+          location / {
+                  allow all;
+                  root /usr/share/nginx/html; #nginx root index 파일
+                  try_files $uri =404;
+          }
+          # ----------------https-----------------
+
+          location /api/ { #client가 " :80/api/~ "으로 요청시 proxy가 server로  " /api/~ " 요청 전달
+              #rewrite ^/api(.*)$ $1 break; #server 내부적으로 요청시 /api가 붙지 않으므로 사용X
+              proxy_pass         http://docker-server;
+              proxy_redirect     off;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host $server_name;
+          }
+          
+          location / { #client가 " :80/~ "으로 요청시 proxy가 front로  " /~ " 요청 전달
+              proxy_pass         http://docker-client;
+              proxy_redirect     off;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host $server_name;
+          }
+      }
+  }
+  ```
+  #### 5. 인증서 발급 확인
+  ##### 1. docker-compose up -d 이후 certbot 로그확인
+  ```html
+  Saving debug log to /var/log/letsencrypt/letsencrypt.log
+  Some challenges have failed.
+  Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+  Simulating a certificate request for grnr.co.kr and www.grnr.co.kr
+  The dry run was successful.
+  ```
+  ##### 2. dry run successful이므로 docker-compose.yaml에서 dry 옵션 제거 후 실행
+  ```yaml
+  #========= https 인증서 받기=============
+    certbot:
+      depends_on:
+        - webserver
+      image: certbot/certbot
+      container_name: certbot
+      volumes:
+        - ./certbot-etc:/etc/letsencrypt
+        - ./myweb:/usr/share/nginx/html
+      command: certonly --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr -d www.grnr.co.kr
+    #======================
+  ```
+  ##### 3. ROOT 계정으로 certbot-etc/live 안 인증서 확인
+  ```
+  # ec2 root 사용자 패스워드 설정 
+  $sudo passwd
+  # root 사용자로 전환, ubuntu계정으로 돌아올시 : $su - ubuntu
+  $su -
+  
+  ---목록
+  path : /home/ubuntu/greenery-db-nginx/certbot-etc/live/grnr.co.kr
+   - README  
+   - cert.pem  
+   - chain.pem  
+   - fullchain.pem  
+   - privkey.pem
+  ```
+#### 5. https 으로 통신하기위해 nginx.conf 수정
+- 보안파일 
+- [options-ssl-nginx.conf](https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf)
+- [ssl-dhparams.pem](https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem)
+```configure
+# http 요청을 모두 https 요청으로 Redirection
+server {
+        listen 80;
+        server_name grnr.co.kr www.grnr.co.kr;
+
+        location ~ /.well-known/acme-challenge {
+                allow all;
+                root /usr/share/nginx/html; #nginx root index 파일
+                try_files $uri =404;
+        }
+
+        # Redirection
+        location / {
+                return 301 https://$host$request_uri;
+        }    
+    }
+
+server { #https 설정
+        listen 443 ssl;
+        server_name grnr.co.kr www.grnr.co.kr;
+        
+        ssl_certificate /etc/letsencrypt/live/grnr.co.kr/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/grnr.co.kr/privkey.pem;
+
+        #certbot-etc 파일에 추가
+        include /etc/letsencrypt/options-ssl-nginx.conf; # 보안 강화를 위한 옵션 추가
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;   # 보안 강화를 위한 옵션 추가
+
+        location /api/ { #client가 " :80/api/~ "으로 요청시 proxy가 server로  " /api/~ " 요청 전달
+              #rewrite ^/api(.*)$ $1 break; #server 내부적으로 요청시 /api가 붙지 않으므로 사용X
+              proxy_pass         http://docker-server;
+              proxy_redirect     off;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host $server_name;
+          }
+          
+          location / { #client가 " :80/~ "으로 요청시 proxy가 front로  " /~ " 요청 전달
+              proxy_pass         http://docker-client;
+              proxy_redirect     off;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Host $server_name;
+          }
+      }
+  }
+```
+#### 6. docker-compose 실행 후 grnr.co.kr 접속
+ - cf. certbot 컨테이너는 인증서 확인 후 종료된다.
+
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 
 ## Reference

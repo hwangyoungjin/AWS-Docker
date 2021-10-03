@@ -18,7 +18,7 @@ client (80/api) -> (80) nginxproxy (8080) -> (8080) springboot (dockercompose li
 
 ---
 # [Second-greenery](https://github.com/hwangyoungjin/AWS-Docker/blob/main/Second/README.md)
-## AWS EC2, ningxproxy, SpringBoot, React, Docker, Github-Actions
+## AWS EC2, ningxproxy, SpringBoot, React, Docker, Github-Actions, HTTPS
 ### 설계
   - <img src="https://user-images.githubusercontent.com/60174144/128975823-ffa741bd-7202-4472-943e-0e9466856dc4.png" width="70%" height="70%">
 ```html
