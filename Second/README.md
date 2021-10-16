@@ -148,7 +148,7 @@ COPY ${JAR_FILE} application.jar
 ENTRYPOINT ["java","-jar","application.jar"]
 ```
 
-- ## 5. client 프로젝트
+## 5. client 프로젝트
 
 - #### dockerfile 설정
 
@@ -470,6 +470,32 @@ server { #https 설정
 ```
 #### 9. docker-compose 실행 후 https://grnr.co.kr 접속
  - cf. certbot 컨테이너는 인증서 확인 후 종료된다.
+
+## 8. log 설정
+### [참고](https://ingnoh.tistory.com/50)
+- 기본적으로 log-rotation을 지원하지 않으므로, json-file은 계속해서 쌓여 많은 디스크 공간을 차지
+- 모든 서비스에 아래와 같이 logging 설정
+```yml
+version: "3"
+
+services:
+  server:
+    restart: always
+    build:
+      context: /home/ubuntu/grnr-server/demo
+      dockerfile: Dockerfile
+    links:
+      - "db:mysqldb"
+    ports:
+      - "8080:8080" # if want direct access
+    container_name: servercontainer
+    depends_on:
+     - db
+    logging:
+      options:
+        max-size: "1024m" #로그 파일당 최대 용량
+        max-file: "5" #로그 파일의 최대 개수
+```
 
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 
