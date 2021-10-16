@@ -263,13 +263,16 @@ jobs:
             docker-compose up --build -d
 ```
 ## 7. Https 설정
-  #### 1. [닷네임코리아](https://domain.dotname.co.kr)에서 도메인 구매 후 ip 연결
+  #### 1. [닷네임코리아](https://domain.dotname.co.kr)에서 도메인 구매
+  #### 2. [AWS EC2 route53](https://sovovy.tistory.com/37)에서 DNS 등록
+  #### 3. [닷네임코리아 네임서버](https://sovovy.tistory.com/37)에 AWS dns 등록
+  
   ```html
   www.grnr.co.kr -> 3.38.62.243
   grnr.co.kr -> 3.38.62.243
   ```
-  #### 2. aws https에 사용할 443 포트 open
-  #### 3. docker-compose.ymal에 https 관련 설정 추가
+  #### 4. aws https에 사용할 443 포트 open
+  #### 5. docker-compose.ymal에 https 관련 설정 추가
   ```yml
   # certbot & nginx 설정
   # certbot : 연단위 비용없이 인증서를 발급해주는 서비스로 90일마다 갱신해줘야한다.
@@ -335,7 +338,7 @@ jobs:
       - "3306:3306" # If you don't want to go through nginxproxy and want to approach right away,
     container_name: dbcontainer
   ```
-  #### 4. nginx.conf에 https 인증서 받기 위해 추가
+  #### 6. nginx.conf에 https 인증서 받기 위해 추가
   ```conf
       server {
           # ----------------https-----------------
@@ -373,7 +376,7 @@ jobs:
       }
   }
   ```
-  #### 5. 인증서 발급 확인
+  #### 7. 인증서 발급 확인
   ##### 1. docker-compose up -d 이후 certbot 로그확인
   ```html
   Saving debug log to /var/log/letsencrypt/letsencrypt.log
@@ -411,7 +414,7 @@ jobs:
    - fullchain.pem  
    - privkey.pem
   ```
-#### 5. https 으로 통신하기위해 nginx.conf 수정
+#### 8. https 으로 통신하기위해 nginx.conf 수정
 - 보안파일 
 - [options-ssl-nginx.conf](https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf)
 - [ssl-dhparams.pem](https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem)
@@ -465,7 +468,7 @@ server { #https 설정
       }
   }
 ```
-#### 6. docker-compose 실행 후 grnr.co.kr 접속
+#### 9. docker-compose 실행 후 https://grnr.co.kr 접속
  - cf. certbot 컨테이너는 인증서 확인 후 종료된다.
 
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
