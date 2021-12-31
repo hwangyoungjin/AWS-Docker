@@ -339,7 +339,7 @@ jobs:
     container_name: dbcontainer
   ```
   #### 6. nginx.conf에 https 인증서 받기 위해 추가
-  ```conf
+  ```lombok.config
       server {
           # ----------------https-----------------
           location ~ /.well-known/acme-challenge {
@@ -545,7 +545,289 @@ certbot:
 # 7. nginx.conf 에서 develop.grnr.co.kr 포워딩 설정하기 [생략]
 ```
 
+## 10. 개발서버, 운용서버 분리
+### 1. architecture
+- <img src="https://user-images.githubusercontent.com/60174144/147813781-3e74963a-1f54-478c-a7f6-10e2ce10b07f.png" width="70%" height="70%">
 
+### 2. develop 용 폴더에 프로젝트 clone
+- clone 후 server는 gradlew build
+
+### 3. docker-compose 에 container 추가
+```yaml
+version: "3"
+
+services:
+  nginxproxy:
+    depends_on:
+      - db
+      - server
+      #- client
+      - dictionary-client
+      - db-develop
+      - server-develop
+      #- client
+      - dictionary-client-develop
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    logging:
+      options:
+        max-size: "1024m"
+        max-file: "5"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot-etc:/etc/letsencrypt
+      - ./myweb:/usr/share/nginx/html
+    container_name: nginxproxy
+
+  certbot:
+    depends_on:
+      - nginxproxy
+      - dictionary-client
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot-etc:/etc/letsencrypt
+      - ./myweb:/usr/share/nginx/html
+    command: certonly --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr
+  dictionary-client:
+    restart: always
+    build:
+      context: /home/ubuntu/grnr-dictionary-client
+      dockerfile: Dockerfile
+    ports:
+      - "4000:80" # if want direct access
+    container_name: dictionaryclientcontainer
+    logging:
+      options:
+        max-size: "1024m"
+        max-file: "5"
+    depends_on:
+      - server
+    
+          #client:
+          #restart: always
+          #build:
+          #context: /home/ubuntu/greenery-client
+          #dockerfile: Dockerfile
+          #ports:
+          #- "3000:3000" # if want direct access
+          #container_name: clientcontainer
+          #depends_on:
+        #- server
+- server:
+    restart: always
+    build:
+      context: /home/ubuntu/grnr-server/demo
+      dockerfile: Dockerfile
+    links:
+      - "db:mysqldb"
+    ports:
+      - "8080:8080" # if want direct access
+    container_name: servercontainer
+    depends_on:
+      - db
+    logging:
+      options:
+        max-size: "1024m"
+        max-file: "5"
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./greenerydb:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=greenerydb
+      - MYSQL_ROOT_PASSWORD=green
+    ports:
+      - "3306:3306"
+    container_name: dbcontainer
+
+  dictionary-client-develop:
+    restart: always
+    build:
+      context: /home/ubuntu/grnr-dictionary-client-develop
+      dockerfile: Dockerfile
+    ports:
+      - "5000:80" # if want direct access
+    container_name: dictionaryclientcontainer-develop
+    logging:
+      options:
+        max-size: "1024m"
+        max-file: "5"
+    depends_on:
+      - server-develop
+
+  server-develop:
+    restart: always
+    build:
+      context: /home/ubuntu/grnr-server-develop/demo
+      dockerfile: Dockerfile
+    links:
+      - "db-develop:mysqldb"
+    ports:
+      - "9080:8080" # if want direct access
+    container_name: servercontainer-develop
+    depends_on:
+      - db-develop
+    logging:
+      options:
+        max-size: "1024m"
+        max-file: "5"
+  db-develop:
+    image: mysql:5.7
+    volumes:
+      - ./greenerydb-develop:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=greenerydb
+      - MYSQL_ROOT_PASSWORD=green
+    ports:
+      - "3307:3306"
+    container_name: dbcontainer-develop
+```
+### 4. nginx subdomain 설정
+```lombok.config
+user nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" "$request_uri" "$uri"'
+                      '"$http_user_agent" "$http_x_forwarded_for"';    access_log  /var/log/nginx/access.log  main;     
+    sendfile on;
+    keepalive_timeout 65;
+
+    upstream docker-server {
+        server server:8080;
+    }
+
+    upstream docker-dictionary-client {
+        server dictionary-client;
+    }
+
+    upstream docker-server-develop {
+        server server-develop;
+    }
+
+    upstream docker-dictionary-client-develop {      
+        server dictionary-client-develop;
+    }
+
+    #upstream docker-client {
+       # server client:80;
+   # }
+   
+# http ->  https Redirection
+    server {
+        listen 80;
+        server_name grnr.co.kr develop.grnr.co.kr www.grnr.co.kr;  
+
+        location ~ /.well-known/acme-challenge {
+                allow all;
+                root /usr/share/nginx/html;
+                try_files $uri =404;
+                #try_files $uri /index.tsx;
+        }
+
+        # Redirection
+        location / {
+                return 301 https://$host$request_uri;
+        }
+    }
+    
+    server {
+        listen 443 ssl;
+        server_name grnr.co.kr develop.grnr.co.kr;
+
+        ssl_certificate /etc/letsencrypt/live/grnr.co.kr/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/grnr.co.kr/privkey.pem;
+        include /etc/letsencrypt/options-ssl-nginx.conf;
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+        proxy_connect_timeout 1d;
+        proxy_send_timeout 1d;
+        proxy_read_timeout 1d;
+    
+        location /api/ {
+            proxy_pass         http://docker-server;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;      
+            proxy_set_header   X-Forwarded-Proto $scheme;
+        }
+
+
+        location /book/ {
+            proxy_pass         http://docker-dictionary-client;    
+            proxy_http_version 1.1;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;      
+            proxy_set_header   X-Forwarded-Proto $scheme;
+       }
+
+        #location / { #client가 " :80/~ "으로 요청시 proxy가 front>로  " /~ " 요청 전달
+             # proxy_pass         http://docker-client;
+             # proxy_redirect     off;
+             # proxy_set_header   Host $host;
+             # proxy_set_header   X-Real-IP $remote_addr;
+             # proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+             # proxy_set_header   X-Forwarded-Host $server_name;   
+         # }
+    }
+
+    server {
+        listen 443 ssl;
+        server_name develop.grnr.co.kr;
+
+        ssl_certificate /etc/letsencrypt/live/grnr.co.kr/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/grnr.co.kr/privkey.pem;
+        include /etc/letsencrypt/options-ssl-nginx.conf;
+        ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+        proxy_connect_timeout 1d;
+        proxy_send_timeout 1d;
+        proxy_read_timeout 1d;
+
+
+        location /api/ {
+            proxy_pass         http://docker-server-develop;       
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;      
+            proxy_set_header   X-Forwarded-Proto $scheme;
+        }
+
+
+        location /book/ {
+            proxy_pass         http://docker-dictionary-client-develop;
+            proxy_http_version 1.1;
+            proxy_redirect     off;
+            proxy_set_header   Host $host;
+            proxy_set_header   X-Real-IP $remote_addr;
+            proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header   X-Forwarded-Host $server_name;      
+            proxy_set_header   X-Forwarded-Proto $scheme;
+       }
+    }
+}
+```
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 
 ## Reference
