@@ -503,6 +503,48 @@ services:
 2. 기존 grnr.co.kr 호스팅 영역 에서 레코드 생성
 3. 레코드 안 develop 이름으로 1번에서 생성한 ns 값 가져와서 적용
 - <img src="https://user-images.githubusercontent.com/60174144/147807723-1da28579-be01-4267-b649-dac250365baf.png" width="70%" height="70%">
+### 2. subdomain ssl 적용 [참고1](https://stackoverflow.com/questions/60842065/how-to-add-subdomain-in-letsencrypt-i-am-using-docker-nginx-wordpress)
+1. docker-compose 파일에 subdomain [expand](https://blog.naver.com/PostView.nhn?blogId=jodi999&logNo=221753871232)
+```yaml
+  certbot:
+    depends_on:
+     - nginxproxy
+     - dictionary-client
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot-etc:/etc/letsencrypt
+      - ./myweb:/usr/share/nginx/html
+    command: certonly --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr
+```
+2. 위 yaml 파일에서 강제 ssl 인증서 갱신
+```yaml
+# 1. --dry-run 으로 테스트 후 실행
+certbot:
+  depends_on:
+    - nginxproxy
+    - dictionary-client
+  image: certbot/certbot
+  container_name: certbot
+  volumes:
+    - ./certbot-etc:/etc/letsencrypt
+    - ./myweb:/usr/share/nginx/html
+  command: certonly --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr
+
+# 2. docker-compose up --build -d 후 certbot log 확인
+  Simulating renewal of an existing certificate for grnr.co.kr and develop.grnr.co.kr
+  The dry run was successful.
+  Saving debug log to /var/log/letsencrypt/letsencrypt.log
+  
+# 3. --dry-run 옵션 제거 후 실행
+# 4. ./certbot-etc/live 위치에 grnr.co.kr-0001폴더 생성됨
+# 5. 기존 grnr.co.kr을 다른 이름으로 변경 후 grnr.co.kr-0001 폴더를 grnr.co.kr 으로 변경
+# 6. 만료일 확인하기
+ $ sudo openssl x509 -dates -noout < ~/greenery-db-nginx/certbot-etc/live/grnr.co.kr/cert.pem
+
+# 7. nginx.conf 에서 develop.grnr.co.kr 포워딩 설정하기 [생략]
+```
+
 
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 

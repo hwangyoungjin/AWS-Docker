@@ -21,6 +21,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GithubDefaultAccount">
+    <option name="defaultAccountId" value="d00e41d1-eea4-44c4-b15f-54498b574e1f" />
+  </component>
   <component name="ProjectId" id="1wUjRwFGzesiVbJUeZHo51C7uko" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -61,8 +64,16 @@
       <workItem from="1628525121211" duration="2825000" />
       <workItem from="1628595441313" duration="696000" />
       <workItem from="1628611169355" duration="741000" />
-      <workItem from="1640929122670" duration="3584000" />
+      <workItem from="1640929122670" duration="4835000" />
     </task>
+    <task id="LOCAL-00001" summary="update readme for subdomain">
+      <created>1640932778599</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1640932778599</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -76,5 +87,9 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="update readme for subdomain" />
+    <option name="LAST_COMMIT_MESSAGE" value="update readme for subdomain" />
   </component>
 </project>
