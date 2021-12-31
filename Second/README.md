@@ -497,6 +497,13 @@ services:
         max-file: "5" #로그 파일의 최대 개수
 ```
 
+## 9. SubDomain 설정
+### 1. [route53 subdomain 설정](https://aws.amazon.com/ko/premiumsupport/knowledge-center/create-subdomain-route-53/)
+1. route53에서 develop.grnr.co.kr 호스팅 영역 생성, 이때 A 타입 레코드는 기존 grnr.co.kr과 동일한 IP로 설정 
+2. 기존 grnr.co.kr 호스팅 영역 에서 레코드 생성
+3. 레코드 안 develop 이름으로 1번에서 생성한 ns 값 가져와서 적용
+- <img src="https://user-images.githubusercontent.com/60174144/147807723-1da28579-be01-4267-b649-dac250365baf.png" width="70%" height="70%">
+
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 
 ## Reference
