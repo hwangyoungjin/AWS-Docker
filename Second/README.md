@@ -747,7 +747,7 @@ http {
     
     server {
         listen 443 ssl;
-        server_name grnr.co.kr develop.grnr.co.kr;
+        server_name grnr.co.kr;
 
         ssl_certificate /etc/letsencrypt/live/grnr.co.kr/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/grnr.co.kr/privkey.pem;
