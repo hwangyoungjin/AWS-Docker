@@ -828,6 +828,66 @@ http {
     }
 }
 ```
+### 5. github actions 적용
+- [참고1](https://gist.github.com/seye2/1c4b35af99cb991fadd47ec2f48d6499)
+- [참고2](https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions)
+```yaml
+name: deploy
+
+on:
+  push:
+    branches: [master, develop]
+
+
+jobs:
+  deploy_to_prod:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run scripts in server # production deploy
+        uses: appleboy/ssh-action@master
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          script: |
+            cd grnr-server
+            git reset --hard
+            git fetch
+            git pull
+            cd demo
+            chmod +x gradlew
+            ./gradlew clean bootjar
+            cd ~/greenery-db-nginx
+            docker-compose up --build -d
+    if: contains(github.ref, 'master')  # github branch가 master일 때만 develop_to_prod를 실행한다.
+
+  deploy_to_dev: 
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run scripts in server  # develop deploy
+        uses: appleboy/ssh-action@master
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          script: |
+            cd grnr-server-develop
+            git reset --hard
+            git fetch
+            git pull
+            cd demo
+            chmod +x gradlew
+            ./gradlew clean bootjar
+            cd ~/greenery-db-nginx
+            docker-compose up --build -d
+    if: contains(github.ref, 'develop')  # github branch가 develop일 때만 develop_to_dev를 실행한다.
+```
+
+
 ## [추후 S3 연동해서 CI/CD](https://github.com/hwangyoungjin/AWS-Docker/tree/main/Second/s3-ci%2Ccd)   
 
 ## Reference
