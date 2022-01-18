@@ -716,7 +716,7 @@ http {
     }
 
     upstream docker-server-develop {
-        server server-develop;
+        server server-develop:8080;
     }
 
     upstream docker-dictionary-client-develop {      
@@ -827,6 +827,18 @@ http {
        }
     }
 }
+```
+- Issue: [nginxproxy에서 servet container로 연결 못하는 502 Errror 문제(https://velog.io/@nche/Ngnix-connect-failed-111-Connection-refused-while-connecting-to-upstream)
+```lombok.config
+# 아래 부분을
+upstream docker-server-develop {
+        server server-develop;
+    }
+-----
+# port 추가
+upstream docker-server-develop {
+        server server-develop:8080;
+    }
 ```
 ### 5. github actions 적용
 - [참고1](https://gist.github.com/seye2/1c4b35af99cb991fadd47ec2f48d6499)
