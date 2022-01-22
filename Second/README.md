@@ -188,6 +188,7 @@ ENTRYPOINT ["java","-jar","application.jar"]
   - 2. ec2 서버에서 git 설치 후 server, clien 디렉토리 만들고
     - github repo clone
     - [private repo clone 방법](https://uhou.tistory.com/99)
+      - [ec2안 여러개 rsa 키 다루기](https://mygumi.tistory.com/96)	
       - [rsa key pair 기존 키 삭제 후 새로 생성 가능](https://yunzema.tistory.com/373)
   - 3. github repo secret key 설정
     - 1) host : server ip
