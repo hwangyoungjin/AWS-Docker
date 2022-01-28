@@ -554,6 +554,11 @@ certbot:
 - clone 후 server는 gradlew build
 
 ### 3. docker-compose 에 container 추가
+- develop server 용 properties 추가했으므로 develop active properties 적용하기 위해 아래 부분 추가 [참고](https://blusky10.tistory.com/404)
+```yaml
+environment:
+  - "SPRING_PROFILES_ACTIVE=dev"
+```
 ```yaml
 version: "3"
 
@@ -665,6 +670,8 @@ services:
     build:
       context: /home/ubuntu/grnr-server-develop/demo
       dockerfile: Dockerfile
+    environment:
+      - "SPRING_PROFILES_ACTIVE=dev"
     links:
       - "db-develop:mysqldb"
     ports:
@@ -844,12 +851,6 @@ upstream docker-server-develop {
 ### 5. github actions 적용
 - [참고1](https://gist.github.com/seye2/1c4b35af99cb991fadd47ec2f48d6499)
 - [참고2](https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions)
-- develop server 용 properties 추가
-```text
-1. spring project에 application-dev.properties 추가
-2. deploy의 run script에 develop server properties **dev** 적용 
-```./gradlew clean bootjar --args='--spring.profiles.active=dev'```
-```
 ```yaml
 name: deploy
 
