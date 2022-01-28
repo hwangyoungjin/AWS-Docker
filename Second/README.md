@@ -844,6 +844,12 @@ upstream docker-server-develop {
 ### 5. github actions 적용
 - [참고1](https://gist.github.com/seye2/1c4b35af99cb991fadd47ec2f48d6499)
 - [참고2](https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions)
+- develop server 용 properties 추가
+```text
+1. spring project에 application-dev.properties 추가
+2. deploy의 run script에 develop server properties **dev** 적용 
+```./gradlew clean bootjar --args='--spring.profiles.active=dev'```
+```
 ```yaml
 name: deploy
 
@@ -894,7 +900,7 @@ jobs:
             git pull
             cd demo
             chmod +x gradlew
-            ./gradlew clean bootjar
+            ./gradlew clean bootjar --args='--spring.profiles.active=dev'
             cd ~/greenery-db-nginx
             docker-compose up --build -d
     if: contains(github.ref, 'develop')  # github branch가 develop일 때만 develop_to_dev를 실행한다.
