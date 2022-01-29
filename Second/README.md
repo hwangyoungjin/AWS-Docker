@@ -901,7 +901,7 @@ jobs:
             git pull
             cd demo
             chmod +x gradlew
-            ./gradlew clean bootjar --args='--spring.profiles.active=dev'
+            ./gradlew clean bootjar
             cd ~/greenery-db-nginx
             docker-compose up --build -d
     if: contains(github.ref, 'develop')  # github branch가 develop일 때만 develop_to_dev를 실행한다.
