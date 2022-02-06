@@ -559,6 +559,13 @@ certbot:
 environment:
   - "SPRING_PROFILES_ACTIVE=dev"
 ```
+- front에서도 동일하게 prod, dev 서버 요청 url 구분을 위해 아래 부분 추가 [참고](https://www.freecodecamp.org/news/how-to-implement-runtime-environment-variables-with-create-react-app-docker-and-nginx-7f9d42a91d70/)
+```yaml
+environment:
+      - "REACT_APP_API=https://grnr.co.kr/api/collections"
+environment:
+      - "REACT_APP_API=https://develop.grnr.co.kr/api/collections"
+```
 ```yaml
 version: "3"
 
@@ -606,6 +613,8 @@ services:
     ports:
       - "4000:80" # if want direct access
     container_name: dictionaryclientcontainer
+    environment:
+      - "REACT_APP_API=https://grnr.co.kr/api/collections"
     logging:
       options:
         max-size: "1024m"
@@ -658,6 +667,8 @@ services:
     ports:
       - "5000:80" # if want direct access
     container_name: dictionaryclientcontainer-develop
+    environment:
+      - "REACT_APP_API=https://develop.grnr.co.kr/api/collections"
     logging:
       options:
         max-size: "1024m"
