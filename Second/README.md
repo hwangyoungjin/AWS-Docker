@@ -538,19 +538,18 @@ certbot:
   Saving debug log to /var/log/letsencrypt/letsencrypt.log
   
 # 3. --dry-run 옵션 제거 후 실행 --force-renewal 붙여서 실행
-	command: certonly --dry-run --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr --force-renewal
-# 4. ./certbot-etc/live 위치에 갱신됨 -> 이후 --force-renewal 
+  command: certonly --dry-run --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr --force-renewal
+# 4. ./certbot-etc/live 위치에 갱신됨 -> 이후 '--force-renewal' 제거
 # 5. certbot 로그 확인 $docker logs certbot
-	Successfully received certificate.
-	Certificate is saved at: /etc/letsencrypt/live/grnr.co.kr/fullchain.pem
-	Key is saved at:         /etc/letsencrypt/live/grnr.co.kr/privkey.pem
-	This certificate expires on 2022-07-11.
-	These files will be updated when the certificate renews.
+  Successfully received certificate.
+  Certificate is saved at: /etc/letsencrypt/live/grnr.co.kr/fullchain.pem
+  Key is saved at:         /etc/letsencrypt/live/grnr.co.kr/privkey.pem
+  This certificate expires on 2022-07-11.
+  These files will be updated when the certificate renews.
 # 6. 만료일 확인하기
  $ sudo openssl x509 -dates -noout < ~/greenery-db-nginx/certbot-etc/live/grnr.co.kr/cert.pem
-
 # 7. nginx restart
-	$docker restart nginxproxy
+  $docker restart nginxproxy
 ```
 
 ## 10. 개발서버, 운용서버 분리
