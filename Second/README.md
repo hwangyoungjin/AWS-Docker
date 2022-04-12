@@ -530,16 +530,22 @@ certbot:
   volumes:
     - ./certbot-etc:/etc/letsencrypt
     - ./myweb:/usr/share/nginx/html
-  command: certonly --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr
+  command: certonly --dry-run --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr
 
 # 2. docker-compose up --build -d 후 certbot log 확인
   Simulating renewal of an existing certificate for grnr.co.kr and develop.grnr.co.kr
   The dry run was successful.
   Saving debug log to /var/log/letsencrypt/letsencrypt.log
   
-# 3. --dry-run 옵션 제거 후 실행
-# 4. ./certbot-etc/live 위치에 grnr.co.kr-0001폴더 생성됨
-# 5. 기존 grnr.co.kr을 다른 이름으로 변경 후 grnr.co.kr-0001 폴더를 grnr.co.kr 으로 변경
+# 3. --dry-run 옵션 제거 후 실행 --force-renewal 붙여서 실행
+	command: certonly --dry-run --webroot --webroot-path=/usr/share/nginx/html --email yoho555@icloud.com --agree-tos --no-eff-email --keep-until-expiring -d grnr.co.kr --expand -d develop.grnr.co.kr --force-renewal
+# 4. ./certbot-etc/live 위치에 갱신됨 -> 이후 --force-renewal 
+# 5. certbot 로그 확인 $docker logs certbot
+	Successfully received certificate.
+	Certificate is saved at: /etc/letsencrypt/live/grnr.co.kr/fullchain.pem
+	Key is saved at:         /etc/letsencrypt/live/grnr.co.kr/privkey.pem
+	This certificate expires on 2022-07-11.
+	These files will be updated when the certificate renews.
 # 6. 만료일 확인하기
  $ sudo openssl x509 -dates -noout < ~/greenery-db-nginx/certbot-etc/live/grnr.co.kr/cert.pem
 
