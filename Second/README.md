@@ -549,7 +549,8 @@ certbot:
 # 6. 만료일 확인하기
  $ sudo openssl x509 -dates -noout < ~/greenery-db-nginx/certbot-etc/live/grnr.co.kr/cert.pem
 
-# 7. nginx.conf 에서 develop.grnr.co.kr 포워딩 설정하기 [생략]
+# 7. nginx restart
+	$docker restart nginxproxy
 ```
 
 ## 10. 개발서버, 운용서버 분리
